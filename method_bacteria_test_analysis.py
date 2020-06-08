@@ -9,7 +9,7 @@ from Bio import SeqIO
 from Bio.SeqUtils import GC
 from scipy import stats
 
-DIR = r'C:\Users\mark\Desktop\Bacterial Genomes'  # main files directory
+DIR = r''  # main files directory
 
 genome_dict = dict()  # dict of 30 samples
 becterium = ['B.anthracis Genome.fasta',
