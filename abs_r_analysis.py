@@ -1,0 +1,221 @@
+
+import os
+import math
+import pandas as pd
+import regex as re
+import numpy as n
+import collections
+
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
+from Bio import SeqIO
+from Bio.SeqUtils import GC
+from scipy import stats
+
+from Bio.SeqRecord import SeqRecord
+from Bio import SeqIO
+
+
+def get_sequences_reverse(file_name, _format):
+    all_seq = list()
+    for seq_record in SeqIO.parse(os.path.join(DIR,file_name), _format):
+        seq = seq_record.seq
+        r_seq = seq.reverse_complement()  # reverse complement of the sequence
+        all_seq.append(str(r_seq))
+    return list(set(all_seq))   # unique sequences
+
+def get_sequences(file_name, _format):
+    all_seq = list()
+    for seq_record in SeqIO.parse(os.path.join(DIR,file_name), _format):
+        seq = seq_record.seq
+        all_seq.append(str(seq))
+    return list(set(all_seq)) 
+
+def find_unique(sequences, pattern):
+    possible_hits = list()
+    for read in sequences:
+        matches = re.findall(pattern, read, overlapped = False)
+        if len(matches) == 0:
+            pass
+        else:
+            possible_hits.append(matches[0])
+    return list(set(possible_hits))
+
+def extract_28(unique):
+    seq_28 = list()
+    for hit in unique:
+        target_seq = hit[27:55]
+        seq_28.append(target_seq)
+    return seq_28
+
+def rearrangement(sequences_28):
+    to_seek = list()
+    for i in range(len(sequences_28)):
+        before = sequences_28[i]
+        half1 = before[2:14]
+        half2 = before[14:26]
+        after = Seq(half2 + 'TA' + half1)
+        record = SeqRecord(after,str(i))
+        to_seek.append(record)
+    return to_seek
+
+def get_reads(file1, file2, _format):
+    R1 = list()
+    for s1 in SeqIO.parse(os.path.join(DIR,file1), _format):
+        seq1 = str(s1.seq)
+        R1.append(seq1)
+    
+    R2 = list()
+    for s2 in SeqIO.parse(os.path.join(DIR, file2), _format):
+        seq2 = str(s2.seq)
+        R2.append(seq2)
+    return R1, R2
+
+def get_true_reads(r1,r2):
+    true_reads = list()
+    for string in r1:
+        if string in r2:
+            true_reads.append(string)
+    return true_reads
+
+####################################################################
+    
+DIR = r'C:\Users\mark\Desktop\Library_Raugh'
+file_name_1 = 'abs-R-lib_R1.fastq'
+file_name_2 = 'abs-R-lib_R2.fastq'
+FORMAT = r'AGACCGGGGACTTATCATCCAACCTGT.{28}ACAGGTTGGATGATAAGTCCCCGGTCT' # IR + TA+24+TA + IR
+
+
+all_sequeces = get_sequences(file_name_1, 'fastq')
+all_sequeces_r = get_sequences_reverse(file_name_2, 'fastq')
+
+unique_sequences = find_unique(all_sequeces, FORMAT)
+unique_sequences_r = find_unique(all_sequeces_r, FORMAT)
+
+seq_28 = extract_28(unique_sequences)
+seq_28_r = extract_28(unique_sequences_r)
+
+reads_28 = rearrangement(seq_28)
+reads_28_r = rearrangement(seq_28_r)
+
+with open("abs_R1.fasta", "w") as output_handle:
+    SeqIO.write(reads_28, output_handle, "fasta")
+with open("abs_R2.fasta", "w") as output_handle:
+    SeqIO.write(reads_28_r, output_handle, "fasta")
+    
+R1_reads, R2_reads = get_reads('abs_R1.fasta', 'abs_R2.fasta', 'fasta') # different DS, as lists from FASTA
+
+#with open("true_read.fasta", "w") as output_handle:
+#    SeqIO.write(reads_28_r, output_handle, "fasta")
+
+
+for record in SeqIO.parse(os.path.join(DIR,'Mycobacterium_abscessus_ATCC_19977_genome_v3.fasta'), 'fasta'):
+    genome_pos = str(record.seq)
+    genome_neg = str(record.seq.reverse_complement())
+    break
+
+def init_mapper(reads, strand): # strand is the genome
+    found = list()
+    for read in reads:
+        for match in re.finditer(read, strand):
+            info = '%02d-%02d: %s' % (match.start(), match.end(), match.group(0))
+            found.append((read,info))
+    return found
+
+r1_to_pos = init_mapper(R1_reads, genome_pos)
+r1_to_neg = init_mapper(R1_reads, genome_neg)
+r2_to_pos = init_mapper(R2_reads, genome_pos)
+r2_to_neg = init_mapper(R2_reads, genome_neg)
+
+from Bio import SeqIO
+gene_dict = dict()  # The annotated genes of M.abs (Mycobrowser)
+for gene_record in SeqIO.parse(os.path.join(DIR,'Mycobacterium_abscessus_ATCC_19977_genes_v3.fasta'), "fasta"):
+    key = str(gene_record.id)
+    value = str(gene_record.seq).upper()
+    gene_dict.update({key:value})
+
+quary_reads = r1_to_neg + r1_to_pos + r2_to_neg + r2_to_pos  
+match_list = list()   
+for quary in quary_reads:
+    quary_insert = quary[0]
+    quary_insert_r = str(Seq(quary[0]).reverse_complement())
+    for gene_id, gene in gene_dict.items():
+        if quary_insert in gene:
+            match_list.append((quary_insert,gene_id))
+        if quary_insert_r in gene:
+            match_list.append((quary_insert_r,gene_id))
+                    
+gene_hits = list(set(match_list))
+
+###########################################################################
+
+insert_seq = []
+mabs_x = []
+gene_coor = []
+strand_type = []
+gene_seq = []
+pinpoint = []
+g_length = []   
+
+for duo in gene_hits: # parsing to create a table of genes
+    insert_seq.append(duo[0])
+    temp = duo[1].split('|')
+    mabs_x.append(temp[0])
+    gene_coor.append(temp[3])
+    strand_type.append(temp[4])
+    
+for locus in mabs_x:  # finds the full sequence of the harmed gene 
+    for k,v in gene_dict.items():
+        if locus in k:
+            gene_seq.append(v)
+
+for i in range(len(insert_seq)):
+    pin = [(m.start(0), m.end(0)) for m in re.finditer(insert_seq[i], gene_seq[i])]
+    pinpoint.append(pin[0][0]+12)
+    g_length.append(len(gene_seq[i]))
+
+
+            
+mabs_dict = {'Hit Sequence': insert_seq, 'Gene Sequence':gene_seq,
+             'Gene length': g_length, 'Insertion Point': pinpoint,
+             'Locus': mabs_x, 'Gene Coordinates': gene_coor,
+             'Strand': strand_type}
+
+mabs_df = pd.DataFrame(mabs_dict)
+mabs_df.to_excel("output.xlsx")
+
+
+###########################################################################
+# non coding region
+not_genes = list()
+matches_as_list = list(set([elem[0] for elem in match_list]))
+quary_as_list = list(set([q[0] for q in quary_reads]))
+
+for q in quary_as_list:
+    if q not in matches_as_list:
+        not_genes.append(q)
+
+test = list()
+
+for ng in not_genes:
+    ng_r = str(Seq(ng).reverse_complement())
+    for gene_id2, gene2 in gene_dict.items():
+        if ng in gene2 or ng_r in gene2:
+            test.append((ng))
+
+test2 = list()           
+for sq in not_genes:
+    if sq not in test:
+        test2.append(sq)
+        test2.append(str(Seq(sq).reverse_complement()))
+            
+ncr = init_mapper(test2, genome_pos)
+ncr_r = init_mapper(test2, genome_neg)           
+        
+
+
+
+           # not_genes.remove(ng)        
+#    for q in quary_reads:
+        
+        
