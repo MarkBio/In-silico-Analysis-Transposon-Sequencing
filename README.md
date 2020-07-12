@@ -25,4 +25,5 @@ Smooth to Rough transition associated locus.
 - init_mapper fucnction is specified to find the insertion location (in bases) and locus based on the provided genome/gene file. 
 - A dataFrame (mabs_df) contains the resulted information.
 - Similar analysis for the non-coding sequences (inter-genetic rigions) was perfomed.
-
+- The raw data files (reads) of the sequenced amplicons (FASTQ) is available at:
+  https://www.dropbox.com/sh/u2jvlp4oimurmkp/AABMSIqWjYwcvIx3BD-1Gpe8a?dl=0
