@@ -14,7 +14,7 @@ method to current Tn-seq analysis methods.
 abs_r_analysis.py - in-silico analysis of experimental results. Transposon insertion in M. abs (ATCC 19977). 
 Smooth to Rough transition associated locus. 
 
-- Documentation is presented in the py.files, explanaton & commentary are located by all of the function used.
+- Documentation is presented in the py.files, explanaton & commentary are located by the layout and the function used.
   The stages of each analysis is reported with I/O and the desired results. The analysis is elementary, accessible, very mutable
   and can change based on the desired modifications and outcomes.
 - For this analysis GFF, Genome sequences and individual gene sequences files were downloaded
