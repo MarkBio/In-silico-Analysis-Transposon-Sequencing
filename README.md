@@ -13,7 +13,7 @@ method to current Tn-seq analysis methods.
 # M.abs-library-preparation-Analysis
 abs_r_analysis.py - in-silico analysis of experimental results. Transposon insertion in M. abs (ATCC 19977). 
 Smooth to Rough transition associated locus. 
-
+- Work layout follows a simple process: Parse and extract sequences, trimming, nucleotides rearrangement and then mapping.
 - Documentation is presented in the py.files, explanaton & commentary are located by the layout and the function used.
   The stages of each analysis is reported with I/O and the desired results. The analysis is elementary, accessible, very mutable
   and can change based on the desired modifications and outcomes.
@@ -28,5 +28,5 @@ Smooth to Rough transition associated locus.
 - init_mapper fucnction is specified to find the insertion location (in bases) and locus based on the provided genome/gene file. 
 - A dataFrame (mabs_df) contains the resulted information.
 - Similar analysis for the non-coding sequences (inter-genetic rigions) was perfomed.
-- The raw data files (reads) of the sequenced amplicons (FASTQ) is available at:
+- The raw data files (reads) of the sequenced amplicons (FASTQ) are available at:
   https://www.dropbox.com/sh/u2jvlp4oimurmkp/AABMSIqWjYwcvIx3BD-1Gpe8a?dl=0
