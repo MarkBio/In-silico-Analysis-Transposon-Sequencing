@@ -126,6 +126,7 @@ DIR = ''            #  main files directory
 file_name_1 = ''    
 file_name_2 = ''    #  fasta/fastq directory
 FORMAT = r'AGACCGGGGACTTATCATCCAACCTGT.{28}ACAGGTTGGATGATAAGTCCCCGGTCT'  # in our case IR + 28N (from genomic seq) + IR
+# Or for a more flexible search (based on read quility), format could be: r'TA.{24}TA
 
 # "r" in variable name means reverse
 # First analysis through parsing, based on function above
